@@ -21,4 +21,4 @@ class AgentTracer:
 
     @staticmethod
     def end_trace():
-        structlog.contextvars.clear_contextvars()
+        structlog.contextvars.unbind_contextvars("trace_id")

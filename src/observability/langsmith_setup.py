@@ -14,5 +14,7 @@ def setup_langsmith():
     os.environ["LANGSMITH_TRACING"] = "true"
     if settings.langsmith_api_key:
         os.environ["LANGSMITH_API_KEY"] = settings.langsmith_api_key
+    else:
+        logger.warning("langsmith_no_api_key", reason="LANGSMITH_API_KEY not set")
     os.environ["LANGSMITH_PROJECT"] = settings.observability.langsmith.project
     logger.info("langsmith_initialized", project=settings.observability.langsmith.project)

@@ -44,16 +44,18 @@ class AgentMetrics:
             self.total_response_time_ms += ms
 
     def to_dict(self) -> dict:
-        return {
-            "total_requests": self.total_requests,
-            "total_tool_calls": self.total_tool_calls,
-            "agent_route_counts": dict(self.agent_route_counts),
-            "avg_response_time_ms": round(self.avg_response_time_ms, 2),
-            "error_count": self.error_count,
-            "pii_redaction_count": self.pii_redaction_count,
-            "human_approval_count": self.human_approval_count,
-            "model_fallback_count": self.model_fallback_count,
-        }
+        with self._lock:
+            return {
+                "total_requests": self.total_requests,
+                "total_tool_calls": self.total_tool_calls,
+                "agent_route_counts": dict(self.agent_route_counts),
+                "avg_response_time_ms": round(self.avg_response_time_ms, 2),
+                "error_count": self.error_count,
+                "pii_redaction_count": self.pii_redaction_count,
+                "human_approval_count": self.human_approval_count,
+                "human_rejection_count": self.human_rejection_count,
+                "model_fallback_count": self.model_fallback_count,
+            }
 
 _global_metrics = AgentMetrics()
 
