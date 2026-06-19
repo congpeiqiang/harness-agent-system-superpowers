@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
+from langgraph.types import Command
 
 from src.api.schemas import ApprovalDecision, ChatRequest, ChatResponse
 from src.api.stream_parser import parse_graph_event
@@ -53,6 +54,9 @@ async def chat(body: ChatRequest, req: Request):
         if role == "ai" or role == "assistant":
             content = getattr(msg, "content", "") if not isinstance(msg, tuple) else msg[1]
             last_msg = content or ""
+            # Extract agent_name from message metadata
+            if not isinstance(msg, tuple):
+                agent_name = getattr(msg, "name", None) or agent_name
             # Collect tool call names
             tcs = getattr(msg, "tool_calls", None)
             if tcs:
@@ -109,8 +113,7 @@ async def chat_stream(body: ChatRequest, req: Request):
 @router.post("/chat/{session_id}/approve")
 async def approve(session_id: str, body: ApprovalDecision, req: Request):
     """Human-in-the-loop approval callback."""
-    memory = req.app.state.memory
-    checkpointer = await memory.get_checkpointer()
+    graph = req.app.state.graph
 
     metrics = get_metrics()
     if body.approved:
@@ -123,6 +126,11 @@ async def approve(session_id: str, body: ApprovalDecision, req: Request):
         session_id=session_id,
         approved=body.approved,
         reason=body.reason,
+    )
+
+    result = await graph.ainvoke(
+        Command(resume={"approved": body.approved, "reason": body.reason or ""}),
+        config={"configurable": {"thread_id": session_id}},
     )
 
     return {

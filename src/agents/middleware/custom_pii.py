@@ -5,7 +5,16 @@ from typing import Any
 import structlog
 from langchain_core.messages import AIMessage, HumanMessage
 
-from langchain.agents.middleware import AgentMiddleware
+try:
+    from langchain.agents.middleware import AgentMiddleware
+except ImportError:
+    try:
+        from langgraph.prebuilt.middleware import AgentMiddleware
+    except ImportError:
+        # Fallback base class when no middleware framework is installed
+        class AgentMiddleware:  # type: ignore[no-redef]
+            """Minimal base class for environments without langchain/langgraph."""
+            pass
 
 logger = structlog.get_logger(__name__)
 

@@ -11,6 +11,12 @@ logger = get_logger("api.sessions")
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
 
 
+@router.get("/sessions")
+async def list_sessions(user_id: str):
+    """List sessions for a user. Placeholder — full impl needs checkpointer.alist()."""
+    return {"sessions": [], "user_id": user_id}
+
+
 @router.post("/sessions", response_model=SessionInfo)
 async def create_session(body: dict, req: Request):
     """Create a new session and return SessionInfo."""

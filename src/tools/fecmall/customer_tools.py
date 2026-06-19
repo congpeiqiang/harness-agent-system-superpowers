@@ -1,19 +1,8 @@
 """FecMall 客户相关工具 — 异步 LangChain tools."""
-import json
 from langchain_core.tools import tool
 from langchain_core.runnables import RunnableConfig
 from src.tools.fecmall.client import FecMallClient
-
-
-def _get_token(config: RunnableConfig | None) -> str:
-    return (config or {}).get("configurable", {}).get("access_token", "")
-
-
-def _format_json(data: dict | list, indent: int = 2) -> str:
-    try:
-        return json.dumps(data, ensure_ascii=False, indent=indent)
-    except (TypeError, ValueError):
-        return str(data)
+from src.tools.fecmall.utils import get_token, format_json
 
 
 @tool
@@ -34,7 +23,7 @@ async def login(
                 json={"email": email, "password": password},
             )
             data = resp.json()
-            return f"登录成功:\n{_format_json(data)}"
+            return f"登录成功:\n{format_json(data)}"
     except Exception as e:
         return f"Error: 登录失败 — {e}"
 
@@ -66,7 +55,7 @@ async def register(
                 },
             )
             data = resp.json()
-            return f"注册成功:\n{_format_json(data)}"
+            return f"注册成功:\n{format_json(data)}"
     except Exception as e:
         return f"Error: 注册失败 — {e}"
 
@@ -79,11 +68,11 @@ async def get_user_profile(config: RunnableConfig = None) -> str:
         config: LangChain RunnableConfig（含 access_token）
     """
     try:
-        token = _get_token(config)
+        token = get_token(config)
         async with FecMallClient(access_token=token) as client:
             resp = await client.get("/customer/account/index")
             data = resp.json()
-            return f"用户资料:\n{_format_json(data)}"
+            return f"用户资料:\n{format_json(data)}"
     except Exception as e:
         return f"Error: 获取用户资料失败 — {e}"
 
@@ -102,14 +91,14 @@ async def update_profile(
         config: LangChain RunnableConfig（含 access_token）
     """
     try:
-        token = _get_token(config)
+        token = get_token(config)
         async with FecMallClient(access_token=token) as client:
             resp = await client.post(
                 "/customer/account/editSubmit",
                 json={"firstname": firstname, "lastname": lastname},
             )
             data = resp.json()
-            return f"更新用户资料成功:\n{_format_json(data)}"
+            return f"更新用户资料成功:\n{format_json(data)}"
     except Exception as e:
         return f"Error: 更新用户资料失败 — {e}"
 
@@ -122,11 +111,11 @@ async def get_address_list(config: RunnableConfig = None) -> str:
         config: LangChain RunnableConfig（含 access_token）
     """
     try:
-        token = _get_token(config)
+        token = get_token(config)
         async with FecMallClient(access_token=token) as client:
             resp = await client.get("/customer/address/list")
             data = resp.json()
-            return f"收货地址列表:\n{_format_json(data)}"
+            return f"收货地址列表:\n{format_json(data)}"
     except Exception as e:
         return f"Error: 获取收货地址列表失败 — {e}"
 
@@ -153,7 +142,7 @@ async def add_address(
         config: LangChain RunnableConfig（含 access_token）
     """
     try:
-        token = _get_token(config)
+        token = get_token(config)
         async with FecMallClient(access_token=token) as client:
             resp = await client.post(
                 "/customer/address/editSubmit",
@@ -167,7 +156,7 @@ async def add_address(
                 },
             )
             data = resp.json()
-            return f"添加收货地址成功:\n{_format_json(data)}"
+            return f"添加收货地址成功:\n{format_json(data)}"
     except Exception as e:
         return f"Error: 添加收货地址失败 — {e}"
 
@@ -184,13 +173,13 @@ async def remove_address(
         config: LangChain RunnableConfig（含 access_token）
     """
     try:
-        token = _get_token(config)
+        token = get_token(config)
         async with FecMallClient(access_token=token) as client:
             resp = await client.post(
                 "/customer/address/remove",
                 json={"address_id": address_id},
             )
             data = resp.json()
-            return f"删除收货地址成功 (地址ID: {address_id}):\n{_format_json(data)}"
+            return f"删除收货地址成功 (地址ID: {address_id}):\n{format_json(data)}"
     except Exception as e:
         return f"Error: 删除收货地址失败 — {e}"

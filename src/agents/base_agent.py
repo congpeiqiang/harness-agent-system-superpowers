@@ -124,6 +124,14 @@ class BaseAgent(ABC):
         Returns:
             Command(goto="supervisor") 包含 Agent 的输出 messages
         """
+        if middleware is None:
+            try:
+                from src.agents.middleware import build_middleware_stack
+                middleware = build_middleware_stack()
+            except Exception as exc:
+                logger.warning("middleware_build_failed", error=str(exc))
+                middleware = None
+
         agent = self._build_agent(model, middleware)
         result = await agent.ainvoke(state, config=config)
 
@@ -151,6 +159,14 @@ class BaseAgent(ABC):
         Yields:
             Agent 执行过程中的事件
         """
+        if middleware is None:
+            try:
+                from src.agents.middleware import build_middleware_stack
+                middleware = build_middleware_stack()
+            except Exception as exc:
+                logger.warning("middleware_build_failed", error=str(exc))
+                middleware = None
+
         agent = self._build_agent(model, middleware)
         async for event in agent.astream_events(state, config=config, version="v2"):
             yield event

@@ -101,7 +101,7 @@ def build_middleware_stack(
         stack.append(mw_classes["ModelRetryMiddleware"](
             max_retries=mw_cfg.model_retry.max_retries,
             initial_delay=mw_cfg.model_retry.retry_delay,
-            backoff_factor=mw_cfg.model_retry.backoff_factor,
+            backoff_factor=mw_cfg.model_retry.retry_delay,
         ))
         logger.debug("middleware_added", name="ModelRetryMiddleware")
 

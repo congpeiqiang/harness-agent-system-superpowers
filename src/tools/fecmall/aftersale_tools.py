@@ -1,19 +1,8 @@
 """FecMall 售后相关工具 — 异步 LangChain tools."""
-import json
 from langchain_core.tools import tool
 from langchain_core.runnables import RunnableConfig
 from src.tools.fecmall.client import FecMallClient
-
-
-def _get_token(config: RunnableConfig | None) -> str:
-    return (config or {}).get("configurable", {}).get("access_token", "")
-
-
-def _format_json(data: dict | list, indent: int = 2) -> str:
-    try:
-        return json.dumps(data, ensure_ascii=False, indent=indent)
-    except (TypeError, ValueError):
-        return str(data)
+from src.tools.fecmall.utils import get_token, format_json
 
 
 @tool
@@ -32,7 +21,7 @@ async def submit_complaint(
         config: LangChain RunnableConfig（含 access_token）
     """
     try:
-        token = _get_token(config)
+        token = get_token(config)
         async with FecMallClient(access_token=token) as client:
             # 第一步：验证订单存在
             resp = await client.get(
@@ -49,7 +38,7 @@ async def submit_complaint(
                 "description": description,
                 "status": "投诉已提交",
             }
-            return f"投诉提交成功 (订单ID: {order_id}):\n{_format_json(complaint_info)}"
+            return f"投诉提交成功 (订单ID: {order_id}):\n{format_json(complaint_info)}"
     except Exception as e:
         return f"Error: 提交投诉失败 — {e}"
 
@@ -66,7 +55,7 @@ async def get_refund_status(
         config: LangChain RunnableConfig（含 access_token）
     """
     try:
-        token = _get_token(config)
+        token = get_token(config)
         async with FecMallClient(access_token=token) as client:
             resp = await client.get(
                 "/customer/order/view",
@@ -90,6 +79,6 @@ async def get_refund_status(
                     else f"状态: {status}"
                 ),
             }
-            return f"退款状态 (订单ID: {order_id}):\n{_format_json(refund_info)}"
+            return f"退款状态 (订单ID: {order_id}):\n{format_json(refund_info)}"
     except Exception as e:
         return f"Error: 查询退款状态失败 — {e}"

@@ -24,8 +24,8 @@ async def health(req: Request):
     llm_provider = ""
     milvus_connected = False
 
-    if hasattr(req.app.state, "mcp"):
-        mcp_manager = req.app.state.mcp
+    if hasattr(req.app.state, "mcp_manager"):
+        mcp_manager = req.app.state.mcp_manager
         if hasattr(mcp_manager, "get_server_names"):
             mcp_servers = mcp_manager.get_server_names()
 
