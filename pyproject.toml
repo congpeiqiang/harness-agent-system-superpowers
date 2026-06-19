@@ -1,0 +1,9 @@
+[project]
+name = "fecmall-agent-system"
+version = "1.0.0"
+description = "FecMall 智能客服 Agent 系统"
+requires-python = ">=3.13"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
