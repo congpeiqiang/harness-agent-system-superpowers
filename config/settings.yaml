@@ -1,0 +1,57 @@
+llm:
+  default_provider: "deepseek"
+  providers:
+    openai:
+      base_url: "https://api.openai.com/v1"
+      model: "gpt-4o"
+      temperature: 0.3
+    deepseek:
+      base_url: "https://api.deepseek.com/v1"
+      model: "deepseek-chat"
+      temperature: 0.3
+    ollama:
+      base_url: "http://localhost:11434/v1"
+      model: "qwen2.5:14b"
+      temperature: 0.3
+  agent_overrides:
+    supervisor:
+      provider: "deepseek"
+
+fecmall:
+  base_url: "http://localhost/appserver"
+  default_currency: "USD"
+  default_lang: "en_US"
+  timeout: 30
+
+milvus:
+  uri: "http://localhost:19530"
+  token: ""
+  collection_name: "fecmall_knowledge"
+
+embedding:
+  model: "text-embedding-3-small"
+
+middleware:
+  summarization:
+    max_tokens: 4000
+    keep_messages: 6
+  human_in_the_loop:
+    enabled: true
+    approve_tool_names: [submit_order, remove_address, remove_cart_item, update_profile]
+  tool_call_limit:
+    run_limit: 15
+    thread_limit: 100
+  tool_retry:
+    max_retries: 3
+    backoff_factor: 2.0
+  model_retry:
+    max_retries: 3
+    retry_delay: 1.0
+
+observability:
+  langsmith:
+    enabled: true
+    project: "fecmall-agent"
+  logging:
+    level: "INFO"
+    format: "json"
