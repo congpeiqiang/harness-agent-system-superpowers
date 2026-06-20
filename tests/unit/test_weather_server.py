@@ -1,6 +1,6 @@
 """Tests for weather_server format functions (pure, no mocking needed)."""
 
-from src.mcp.server.weather_server import format_weather_data, format_forecast_data
+from src.mcp_client_service.server.weather_server import format_weather_data, format_forecast_data
 
 
 class TestFormatWeatherData:
