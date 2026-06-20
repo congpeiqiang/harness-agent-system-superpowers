@@ -2,8 +2,8 @@ llm:
   default_provider: "deepseek"
   providers:
     openai:
-      base_url: "https://api.openai.com/v1"
-      model: "gpt-4o"
+      base_url: "https://api.quickrouter.ai/v1"
+      model: "gpt-5.5"
       temperature: 0.3
     deepseek:
       base_url: "https://api.deepseek.com/v1"
@@ -18,7 +18,7 @@ llm:
       provider: "deepseek"
 
 fecmall:
-  base_url: "http://localhost/appserver"
+  base_url: "http://appserver.huice.com"
   default_currency: "USD"
   default_lang: "en_US"
   timeout: 30

@@ -8,6 +8,13 @@
 
 ## 1. 项目概述
 
+- 提示词
+
+```python
+    开发一个harmess agent应用，一定使用中文回答，
+    基于现有FecMall商城系统构建智能客服，同时支持接入外部MCP和Skill，FecMall商城系统的swagger api对应url：https://www.fecmall.com/doc/fecshop-guide/develop/cn-2.0/guide-README.html中"Fecmall Appserver入口"选项内容，基于python3.13、 langchain、fastapi，支持记忆功能使用(使用异步sqlitesaver 和异步sqlitestore)，所有功能尽量使用异步操作，restful服务实现且不仅限异步流式返回astream、ainvoker，可观测性支持langsmith，生成单元测试，实现一个mcp server查询天气，再进你所能设计其他功能，贴近生产级。中文回答，生产的文档名和内容也是中文
+```
+
 ### 1.1 目标
 
 基于现有 FecMall 商城系统构建生产级智能客服 Agent 系统，支持多 Agent 协作、外部 MCP/Skill 扩展、异步流式响应、会话记忆与用户画像、RAG 知识库检索、全链路可观测。
@@ -58,6 +65,7 @@ watchdog
 采用 Supervisor + 专业 Agent 分发模式，每个 Agent 负责一个业务领域，工具集小（3-8 个），LLM 推理准确率更高。
 
 **优势：**
+
 - 职责清晰，每个 Agent 只负责一个领域
 - 可独立迭代和扩展
 - 故障隔离——一个 Agent 出问题不影响其他
@@ -238,6 +246,7 @@ harness-agent-system/
 使用 LangGraph 编排多 Agent 协作，通过 `StateGraph` 定义节点和边，`Command` 做路由跳转。
 
 **核心 API（langchain 1.3.10）：**
+
 - Agent 创建：`from langchain.agents import create_agent`
 - 工具定义：`from langchain_core.tools import tool`（`@tool` + `async def`）
 - 状态图：`from langgraph.graph import StateGraph, END, START`
@@ -386,6 +395,7 @@ llm:
 ### 6.2 API 端点映射
 
 **商品模块** (`product_tools.py` → ProductAgent)：
+
 - `GET /catalogsearch/index/index` → `search_products`
 - `GET /catalog/product/index` → `get_product_detail`
 - `GET /catalog/category/product` → `get_category_products`
@@ -476,13 +486,13 @@ class BaseSkill(ABC):
 | 层次 | 组件 | 作用 | 隔离方式 |
 |------|------|------|---------|
 | 短期记忆 | `AsyncSqliteSaver`（检查点） | 会话内对话历史、Agent 状态 | `thread_id`（session_id） |
-| 长期记忆 | `SqliteStore` | 用户画像、偏好、跨会话知识 | `namespace`（user_id + 类别） |
+| 长期记忆 | `AsyncSqliteStore` | 用户画像、偏好、跨会话知识 | `namespace`（user_id + 类别） |
 
 ### 9.2 导入路径
 
 ```python
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-from langgraph.store.sqlite import SqliteStore
+from langgraph.store.sqlite import AsyncSqliteStore
 ```
 
 ### 9.3 图编译时注入
@@ -493,7 +503,7 @@ graph.compile(checkpointer=checkpointer, store=store)
 
 ### 9.4 用户画像
 
-通过 `SqliteStore` 存储用户偏好、购物习惯、常用地址等信息。每次对话时加载画像注入 Agent 的 system prompt。
+通过 `AsyncSqliteStore` 存储用户偏好、购物习惯、常用地址等信息。每次对话时加载画像注入 Agent 的 system prompt。
 
 ---
 
