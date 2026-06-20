@@ -13,7 +13,7 @@ from src.agents.supervisor import AgentState, supervisor_node
 from src.agents.user_agent import UserAgent
 from src.config.llm_factory import LLMFactory
 from src.memory.memory_manager import MemoryManager
-from src.mcp.client.mcp_client import MCPClientManager
+from src.mcp_client_service.client.mcp_client import MCPClientManager
 from src.observability.logging import get_logger
 from src.skills.registry import SkillRegistry
 

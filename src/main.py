@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.agents.graph_builder import build_agent_graph
 from src.api import chat, health, sessions
-from src.mcp.client.mcp_client import MCPClientManager
+from src.mcp_client_service.client.mcp_client import MCPClientManager
 from src.memory.memory_manager import MemoryManager
 from src.observability.langsmith_setup import setup_langsmith
 from src.observability.logging import get_logger, setup_logging
