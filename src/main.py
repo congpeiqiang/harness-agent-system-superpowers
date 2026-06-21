@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.agents.graph_builder import build_agent_graph
 from src.api import chat, health, sessions
+from src.api import deep_chat
+from src.deep_agent import build_deep_agent
 from src.mcp_client_service.client.mcp_client import MCPClientManager
 from src.memory.memory_manager import MemoryManager
 from src.observability.langsmith_setup import setup_langsmith
@@ -59,6 +61,16 @@ async def lifespan(app: FastAPI):
     )
     app.state.graph = graph
 
+    # --- Deep Agent (deepagents 版,与上面的 graph 并存) ----------------
+    deep_graph = await build_deep_agent(
+        mcp_tools=mcp_manager.get_tools(),
+        skill_tools=registry.get_all_tools(),
+        checkpointer=await memory.get_checkpointer(),
+        store=await memory.get_store(),
+    )
+    app.state.deep_graph = deep_graph
+    logger.info("deep_agent_ready")
+
     logger.info("app_started")
 
     # ====== Ready to serve ======
@@ -90,3 +102,4 @@ app.add_middleware(
 app.include_router(chat.router)
 app.include_router(sessions.router)
 app.include_router(health.router)
+app.include_router(deep_chat.router)
