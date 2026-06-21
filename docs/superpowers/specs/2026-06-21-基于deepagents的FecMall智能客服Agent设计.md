@@ -83,7 +83,22 @@ src/deep_agent/
 | user | [user_agent.py](../../../src/agents/user_agent.py) 的 7 个工具 | 同 |
 | general | 运行时注入的 MCP + Skill 工具 | 同 [general_agent.py](../../../src/agents/general_agent.py) |
 
-子 Agent dict 的字段名(`system_prompt` vs `prompt`、`tools` 传函数还是工具名)在不同 deepagents 版本可能有差异。用一个**构造辅助函数**集中吸收这种差异,参照现有 [base_agent.py](../../../src/agents/base_agent.py) 中对 `create_agent` 的 try/except 兼容写法。
+子 Agent 使用 deepagents 的 `SubAgent` TypedDict(已对 0.6.11 实测确认字段):
+
+```python
+class SubAgent(TypedDict):
+    name: str
+    description: str          # 供主 agent 判断何时委派(相当于路由依据)
+    system_prompt: str
+    tools: NotRequired[Sequence[BaseTool | Callable | dict]]
+    model: NotRequired[str | BaseChatModel]
+    interrupt_on: NotRequired[dict[str, bool | InterruptOnConfig]]   # 审批配在子 agent 层
+    ...
+```
+
+- `tools` 直接传现有工具函数,无需转工具名。
+- `description` 写清各子 agent 的职责边界,主 agent 据此通过 `task` 委派(取代现有 supervisor 的 structured_output 路由)。
+- 审批通过子 agent 的 `interrupt_on` 字段就近配置(下单工具配在 order、登录配在 user),比挂主 agent 更精准。
 
 ### 4.3 `tools.py` — 工具收集
 
@@ -92,7 +107,7 @@ src/deep_agent/
 
 ### 4.4 `approval.py` — 审批配置
 
-把现有需审批的敏感工具(下单 `submit_order`、支付相关、登录 `login`、注册 `register` 等)映射为 deepagents 的人机中断配置。集中在一个文件,便于与现有 [middleware](../../../src/agents/middleware/) 审批列表核对一致。
+把现有需审批的敏感工具(下单 `submit_order`、支付相关、登录 `login`、注册 `register` 等)映射为 deepagents 的 `interrupt_on` 配置,值为 `InterruptOnConfig(allowed_decisions=["approve","edit","reject"])`。审批就近配在对应子 Agent 的 `interrupt_on` 字段上(如下单配在 order 子 Agent)。集中在一个文件维护,便于与现有 [middleware](../../../src/agents/middleware/) 审批列表核对一致。
 
 > 注:具体敏感工具清单在实现时以现有 middleware / 业务工具实际名称为准,确保与现有系统一致。
 
@@ -106,7 +121,7 @@ async def build_deep_agent(*, mcp_tools, skill_tools, checkpointer, store):
 - 用 `LLMFactory.create()` 取模型(复用现有多模型工厂)。
 - 组装 5 个 subagents + 主 Agent 系统提示词(调度中心角色,内容对齐现有 `SUPERVISOR_PROMPT`,但改为通过 `task` 委派的 deepagents 范式)。
 - 接入审批配置 + `checkpointer`/`store`(复用 [MemoryManager](../../../src/memory/memory_manager.py))。
-- 调用 `async_create_deep_agent(...)`(MCP 工具为 async,需用 async 版本),返回编译好的 Agent。
+- 调用 `create_deep_agent(model=..., subagents=[...], system_prompt=..., checkpointer=..., store=...)`,返回编译好的 `CompiledStateGraph`。该返回值原生支持 `ainvoke`/`astream_events`,async MCP 工具可直接传入(0.6.11 仅提供 `create_deep_agent`,无独立 async 工厂)。
 
 ---
 
@@ -164,8 +179,9 @@ app.include_router(deep_chat.router)
 
 ## 8. 前置依赖与风险
 
-1. **deepagents 安装**:当前内网 pypi 源(`pypi.weintdata.cn`)装不上 `deepagents~=0.6.11`。实现前需先解决安装源(换源或离线安装),并执行 `python -c "import deepagents"` 确认可用。
-2. **API 签名确认**:确认 deepagents 0.6.11 中 `create_deep_agent`/`async_create_deep_agent` 的确切参数名(`system_prompt` vs `instructions`、`subagents` schema 字段、审批配置参数名),据此微调 `builder.py`/`subagents.py` 的兼容封装。该不确定性已用「构造辅助函数 + try/except 兼容」的方式收敛。
+1. **deepagents 安装(已解决)**:内网源 `pypi.weintdata.cn` 无该包,改用清华源 `https://pypi.tuna.tsinghua.edu.cn/simple` 已成功安装 `deepagents-0.6.11`。
+2. **API 签名确认(已完成)**:已对 0.6.11 实测确认 —— 工厂函数为 `create_deep_agent`(无 `async_create_deep_agent`),提示词参数为 `system_prompt`,审批参数为 `interrupt_on`,`SubAgent` 字段含 `name/description/system_prompt/tools/model/interrupt_on`。设计已据此定稿,无需兼容封装。
+3. **依赖冲突(已初步验证,风险可控)**:安装 deepagents 时连带升级 `langsmith 0.4.26 → 0.8.18`、引入 `anthropic`/`langchain-anthropic`/`langchain-google-genai`,pip 报告与 `langchain-deepseek 0.1.4`、`langgraph-supervisor 0.0.29` 存在版本约束冲突。但实测 `import deepagents` 与现有 `from src.agents.graph_builder import build_agent_graph`(及 supervisor)**均能正常导入**——冲突的两个包当前项目并未实际 import,故现有 agent 不受影响。实现计划仍应在第一步跑一次现有测试 / 启动 `src.main` 做完整确认。
 
 ---
 
