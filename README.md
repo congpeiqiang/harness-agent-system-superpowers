@@ -13,6 +13,19 @@
 - **流式响应**：SSE 流式输出，支持 Human-in-the-Loop 人工介入机制
 - **Docker 部署**：完整的容器化部署方案，一键启动全套服务
 
+## 🧩 deepagents 版智能客服 Agent（与 langgraph 版并存）
+
+本项目在原有 LangGraph 多 Agent 系统之外，另提供一套基于 **deepagents** 框架的等价实现，二者同时在线、互不影响，可用于行为对比与渐进迁移。
+
+- **代码位置**：`src/deep_agent/`（主 Agent + 商品/订单/售后/用户/通用 5 个子 Agent，通过 `task` 工具委派）
+- **能力对齐**：复用现有全部 FecMall/RAG/MCP/Skill 工具、LLMFactory 与 MemoryManager，并对下单、删除地址、删除购物车、修改资料等敏感操作配置人机审批中断
+- **对外端点**：
+  - `POST /api/v1/deep/chat` —— 同步对话
+  - `POST /api/v1/deep/chat/stream` —— SSE 流式对话
+  - `POST /api/v1/deep/chat/{session_id}/approve` —— 人机审批恢复
+- 原 LangGraph 版端点 `POST /api/v1/chat` 等保持不变
+- **依赖**：`deepagents~=0.6.11`（已在 `requirements.txt`）
+
 ## 🚀 快速开始
 
 ### 环境要求
@@ -74,7 +87,7 @@ export LANGSMITH_API_KEY=your-langsmith-key
 uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 
 # 或同时启动 MCP 天气服务
-uvicorn src.mcp.server.weather_server:starlette_app --host 0.0.0.0 --port 8001
+uvicorn src.mcp_client_service.server.weather_server:starlette_app --host 0.0.0.0 --port 8001
 ```
 
 启动后访问：
